@@ -1,0 +1,5 @@
+Tallinna Ülikool,59.439,24.773
+Astra hoone,59.4397,24.7737
+Nova hoone,59.4399,24.7725
+Mare hoone,59.4405,24.7718
+Vita hoone,59.4410,24.7740
