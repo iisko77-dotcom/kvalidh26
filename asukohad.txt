@@ -1,5 +1,6 @@
-Tallinna Ülikool,59.439,24.773
-Astra hoone,59.4397,24.7737
-Nova hoone,59.4399,24.7725
-Mare hoone,59.4405,24.7718
-Vita hoone,59.4410,24.7740
+Tallinna Raekoda,59.437103,24.745335
+Raekoja plats,59.437782,24.745981
+Kadrioru park,59.438610,24.785833
+KUMU kunstimuuseum,59.437237,24.795864
+Telliskivi Loomelinnak,59.438840,24.728770
+Vabaduse väljak,59.434600,24.745300
