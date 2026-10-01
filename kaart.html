@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Digipädevuse päeva kaart</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.js"></script>
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.css" />
+
+<style>
+body {
+  padding: 0;
+  margin: 0;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+}
+
+#kaardikiht {
+  width: 100%;
+  height: 100%;
+}
+</style>
+
+<script>
+
+var kaart;
+
+var xhr = new XMLHttpRequest();
+
+xhr.onreadystatechange = loeAndmed;
+
+function loeAndmed(){
+
+  if(xhr.readyState == 4){
+
+    var m = xhr.responseText.split("\n");
+
+    for(var i = 0; i < m.length; i++){
+
+      var rida = m[i].split(",");
+
+      L.marker(
+        [parseFloat(rida[1]), parseFloat(rida[2])]
+      )
+      .addTo(kaart)
+      .bindPopup(rida[0]);
+
+    }
+
+  }
+
+}
+
+function algus(){
+
+  xhr.open("GET", "asukohad.txt", true);
+  xhr.send();
+
+  kaart = L.map('kaardikiht').setView([59.439, 24.773], 15);
+
+  new L.TileLayer(
+    'https://tiles.maaamet.ee/tm/tms/1.0.0/hybriid@GMC/{z}/{x}/{y}.png&ASUTUS=TLU&ERIALA=DIGIHUMANITAARIA',
+    {
+      attribution: "Map: <a href='http://www.maaamet.ee/'>Maa-amet</a>",
+      tms: true
+    }
+  ).addTo(kaart);
+
+}
+
+</script>
+
+</head>
+
+<body onload="algus()">
+
+<div id="kaardikiht"></div>
+
+</body>
+</html>
