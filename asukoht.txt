@@ -1,0 +1,7 @@
+nimi;kirjeldus;lat;lng
+Tallinna vanalinn;UNESCO maailmapärandi nimistusse kuuluv vanalinn;59.4370;24.7453
+Tartu Raekoja plats;Tartu ajalooline keskväljak;58.3801;26.7225
+Narva linnus;Ajalooline linnus Narva jõe kaldal;59.3758;28.2010
+Kuressaare piiskopilinnus;Keskaegne linnus Saaremaal;58.2473;22.4792
+Pärnu rand;Populaarne liivarand;58.3735;24.4987
+Suur Munamägi;Eesti kõrgeim mägi;57.7147;27.0593

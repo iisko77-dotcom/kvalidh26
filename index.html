@@ -1,99 +1,28 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="et">
 <head>
-    <title>Digihumanitaaria projekt</title>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #dbeafe, #f0f9ff);
-            text-align: center;
-            margin: 0;
-            padding: 0;
-        }
-
-        header {
-            background-color: #1e3a8a;
-            color: white;
-            padding: 40px;
-        }
-
-        h1 {
-            margin-bottom: 10px;
-        }
-
-        .container {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin: 50px auto;
-            max-width: 900px;
-        }
-
-        .card {
-            background-color: white;
-            width: 300px;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            transition: transform 0.3s;
-        }
-
-        .card:hover {
-            transform: translateY(-10px);
-        }
-
-        .button {
-            display: inline-block;
-            background-color: #2563eb;
-            color: white;
-            padding: 12px 25px;
-            text-decoration: none;
-            border-radius: 8px;
-            margin-top: 15px;
-        }
-
-        .button:hover {
-            background-color: #1d4ed8;
-        }
-
-        footer {
-            margin-top: 50px;
-            padding: 20px;
-            background-color: #1e3a8a;
-            color: white;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Avasta Eestit · Vaatamisväärsuste kaart</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root{font-family:'DM Sans',sans-serif;color:#1a3040;background:#f4f8f8}*{box-sizing:border-box}body{margin:0}header{background:#102f3d;color:white;padding:32px max(22px,calc((100vw - 1200px)/2));}header small{color:#84e1cb;letter-spacing:.15em;text-transform:uppercase;font-weight:700}h1,h2{font-family:Outfit,sans-serif}h1{font-size:clamp(32px,5vw,56px);line-height:1.1;margin:14px 0}header p{color:#c5d8de;max-width:640px}main{max-width:1200px;margin:auto;padding:26px 18px 65px}.layout{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(300px,1fr);gap:18px}.panel{background:white;border:1px solid #dce9e8;border-radius:17px;padding:20px;box-shadow:0 8px 24px #123c4710}.panel h2{margin:0 0 8px}.hint{color:#617682;font-size:14px;line-height:1.5}#map{height:460px;border-radius:12px;z-index:0}.fields{display:grid;gap:11px;margin-top:18px}label{display:grid;gap:5px;font-size:13px;font-weight:700}input,textarea{width:100%;padding:12px;border:1px solid #c8d9d8;border-radius:9px;font:inherit}textarea{resize:vertical;min-height:75px}.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}button{background:#116f65;border:0;color:white;border-radius:9px;padding:12px 16px;font:inherit;font-weight:700;cursor:pointer}button:hover{background:#09554d}button.secondary{background:#e4f2ef;color:#105a51}.actions{display:flex;flex-wrap:wrap;gap:9px}.status{min-height:24px;color:#316c66;font-size:13px}.table-panel{margin-top:18px}table{border-collapse:collapse;width:100%;font-size:14px}th{text-align:left;color:#55717c;font-size:12px;text-transform:uppercase;letter-spacing:.05em}th,td{padding:12px 10px;border-bottom:1px solid #e6eeee}tr:hover td{background:#f6faf9}.scroll{overflow-x:auto}.pill{background:#e0f4ec;border-radius:50px;padding:5px 10px;white-space:nowrap;color:#17694c}.stat{font-size:15px;color:#55717c;margin-bottom:12px}.stat strong{color:#173e47}.user-dot{background:#126bdb;border:3px solid white;border-radius:50%;width:17px;height:17px;box-shadow:0 0 0 3px #126bdb60}.footer{font-size:12px;color:#718891;margin-top:18px}@media(max-width:850px){.layout{grid-template-columns:1fr}#map{height:390px}}
+  </style>
 </head>
-
 <body>
-
-<header>
-    <h1>Digihumanitaaria projekt</h1>
-    <p>Veebilehtede loomise katsetus</p>
-</header>
-
-<h2> Sisukord</h2>
-
-<div class="container">
-
-    <div class="card">
-        <h2>Leht 1</h2>
-        <p>Ülevaade sündmusest ja selle põhiteemadest.</p>
-        <a class="button" href="leht1.html">Ava leht 1</a>
-    </div>
-
-    <div class="card">
-        <h2>Leht 2</h2>
-        <p>Sündmuse detailsem kirjeldus ja ajakava.</p>
-        <a class="button" href="leht2.html">Ava leht 2</a>
-    </div>
-
+<header><small>Interaktiivne Eesti</small><h1>Avasta Eestit.</h1><p>Vali kaardil oma asukoht, avasta vaatamisväärsusi ning lisa ka ise mõni põnev paik.</p></header>
+<main>
+<div class="layout">
+<section class="panel"><h2>Avastuste kaart</h2><p class="hint">Klõpsa kaardil, et määrata oma asukoht. Sinist punkti saad hiljem lohistada.</p><div id="map" aria-label="Interaktiivne Eesti kaart"></div><p id="chosen" class="stat">Asukoht pole veel valitud.</p><div class="actions"><button class="secondary" id="clear">Eemalda minu asukoht</button><button class="secondary" id="reset">Näita kogu Eestit</button></div></section>
+<section class="panel"><h2>Lisa uus vaatamisväärsus</h2><p class="hint">Sisesta koht ja selle koordinaadid või vajuta „Vali lisatava koha punkt“ ning klõpsa kaardil.</p>
+<form id="add-form" class="fields"><label>Koha nimi<input id="nimi" required maxlength="80" placeholder="Näiteks: Kadrioru loss"></label><label>Lühikirjeldus<textarea id="kirjeldus" maxlength="300" placeholder="Mis teeb selle koha eriliseks?"></textarea></label><div class="pair"><label>Laiuskraad<input id="lat" required type="number" step="any" min="-90" max="90" placeholder="59.438"></label><label>Pikkuskraad<input id="lng" required type="number" step="any" min="-180" max="180" placeholder="24.791"></label></div><button type="button" class="secondary" id="pick">Vali lisatava koha punkt</button><button type="submit" id="save">Salvesta tabelisse</button><p class="status" id="status" role="status"></p></form>
+<p class="hint">Näidisandmed laaditakse failist <code>asukoht.txt</code>. Uued kirjed salvestatakse Firebase Realtime Database'i.</p></section>
 </div>
-
-<footer>
-    <p>Koostatud digihumanitaaria kursuse raames</p>
-</footer>
-
-</body>
-</html>
+<section class="panel table-panel"><h2>Vaatamisväärsuste tabel</h2><p class="hint">Andmed failist ja Firebase'ist. Kaugused uuenevad sinu asukoha muutmisel.</p><p class="stat" id="count">Laadin andmeid...</p><div class="scroll"><table><thead><tr><th>Koht</th><th>Kirjeldus</th><th>Koordinaadid</th><th>Allikas</th><th>Kaugus</th></tr></thead><tbody id="places"></tbody></table></div></section>
+<p class="footer">Kaardipõhi © OpenStreetMapi kaastöölised · Leaflet · Kaugused linnulennult</p>
+</main>
+<script type="module" src="app.js"></script>
+</body></html>

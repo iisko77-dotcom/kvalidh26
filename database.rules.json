@@ -1,0 +1,13 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "vaatamisvaarsused": {
+      ".read": true,
+      "$id": {
+        ".write": "!data.exists() && newData.exists()",
+        ".validate": "newData.hasChildren(['nimi', 'kirjeldus', 'lat', 'lng', 'createdAt']) && newData.childrenCount === 5 && newData.child('nimi').isString() && newData.child('nimi').val().length > 0 && newData.child('nimi').val().length <= 80 && newData.child('kirjeldus').isString() && newData.child('kirjeldus').val().length <= 300 && newData.child('lat').isNumber() && newData.child('lat').val() >= -90 && newData.child('lat').val() <= 90 && newData.child('lng').isNumber() && newData.child('lng').val() >= -180 && newData.child('lng').val() <= 180 && newData.child('createdAt').isNumber()"
+      }
+    }
+  }
+}
