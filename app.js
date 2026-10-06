@@ -67,34 +67,24 @@ async function loadFixed() {
 }
 loadFixed();
 async function loadSheet() {
-  const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRKjZ27ej2_qBqVy_HUf7w7C6BSs-k-NDnMgjUzqMY2oo-H21Dgt73dH1PNRlFSzKnWwKHdhwpdNdvd/pub?gid=1388689030&single=true&output=csv';
+  const sheetUrl = 'https://script.google.com/macros/s/AKfycbwEaRsBEYpeNVKqKK1cvJQUTCG6ZstXYJsVORbA9QJHwHPqwVd-C5Q-41NtS7f14vnE/exec';
 
   try {
     const response = await fetch(sheetUrl, { cache: 'no-store' });
-    if (!response.ok) throw new Error('HTTP ' + response.status);
 
-    const text = await response.text();
-
-    const lines = text.trim().split(/\r?\n/);
-
-    if (lines.length < 2) {
-      sheet = [];
-      render();
-      return;
+    if (!response.ok) {
+      throw new Error('HTTP ' + response.status);
     }
 
-    sheet = lines.slice(1).map(line => {
-      const values = line.split(',');
+    const data = await response.json();
 
-      return normalize({
-        nimi: values[1],
-        kirjeldus: values[2],
-        lat: values[3],
-        lng: values[4]
-      }, 'Google Sheets');
-    }).filter(Boolean);
+    sheet = data
+      .map(row => normalize(row, 'Google Sheets'))
+      .filter(Boolean);
 
     render();
+
+    console.log('Google Sheetsist laaditud:', sheet);
 
   } catch (err) {
     console.error('Google Sheetsi laadimine ebaõnnestus:', err);
@@ -102,6 +92,7 @@ async function loadSheet() {
   }
 }
 
+loadSheet();
 loadSheet();
 if(configured) {
   try {
