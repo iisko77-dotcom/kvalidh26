@@ -8,7 +8,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', maxZoom: 19
 }).addTo(map);
 const markers = L.layerGroup().addTo(map);
-let fixed = [], remote = [], selected = null, myMarker = null, pickMode = false;
+let fixed = [], sheet = [], remote = [], selected = null, myMarker = null, pickMode = false;
 const configured = firebaseConfig.apiKey !== 'ASENDA' && !firebaseConfig.databaseURL.includes('ASENDA');
 let database = null;
 function status(message) { $('status').textContent = message; }
@@ -36,7 +36,7 @@ $('clear').onclick=()=>{selected=null;if(myMarker){map.removeLayer(myMarker);myM
 $('reset').onclick=()=>map.setView([58.85,25.3],7);
 function cell(tr, text) { const td=document.createElement('td');td.textContent=text;tr.append(td);return td; }
 function render() {
-  markers.clearLayers(); const rows=[...fixed,...remote];
+  markers.clearLayers(); const rows=[...fixed,...sheet,...remote];
   const ranked=rows.map(p=>({...p, km:selected?map.distance(selected,[p.lat,p.lng])/1000:null}));
   if(selected) ranked.sort((a,b)=>a.km-b.km);
   const body=$('places');body.replaceChildren();
@@ -66,6 +66,43 @@ async function loadFixed() {
   } catch(err) {status('TXT faili laadimine ebaõnnestus. Ava leht veebiserveri kaudu.');console.error(err);}
 }
 loadFixed();
+async function loadSheet() {
+  const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRKjZ27ej2_qBqVy_HUf7w7C6BSs-k-NDnMgjUzqMY2oo-H21Dgt73dH1PNRlFSzKnWwKHdhwpdNdvd/pub?gid=1388689030&single=true&output=csv';
+
+  try {
+    const response = await fetch(sheetUrl, { cache: 'no-store' });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+
+    const text = await response.text();
+
+    const lines = text.trim().split(/\r?\n/);
+
+    if (lines.length < 2) {
+      sheet = [];
+      render();
+      return;
+    }
+
+    sheet = lines.slice(1).map(line => {
+      const values = line.split(',');
+
+      return normalize({
+        nimi: values[1],
+        kirjeldus: values[2],
+        lat: values[3],
+        lng: values[4]
+      }, 'Google Sheets');
+    }).filter(Boolean);
+
+    render();
+
+  } catch (err) {
+    console.error('Google Sheetsi laadimine ebaõnnestus:', err);
+    status('Google Sheetsi andmete laadimine ebaõnnestus.');
+  }
+}
+
+loadSheet();
 if(configured) {
   try {
     const app=initializeApp(firebaseConfig);database=getDatabase(app);
