@@ -1,5 +1,5 @@
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
-import { getDatabase, ref, push, set, onValue, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js';
+import { getDatabase, ref, push, set, onValue, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js';
 import { firebaseConfig } from './firebase-config.js';
 import * as L from 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet-src.esm.js';
 const $ = id => document.getElementById(id);
