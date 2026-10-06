@@ -37,5 +37,3 @@
 
 **Oluline:** Google Formsi vastused lähevad selles näites *eraldi Google Sheetsi tabelisse*, mitte automaatselt Firebase'i ega kaardile. Põhirakendus kasutab `asukoht.txt` ja Firebase'i. Kui õpetaja nõuab just Formsist lisatud ridade automaatset kuvamist kaardil, tuleb juurde teha eraldi Sheets/Apps Scripti ühendus (nt turvaliselt avaldatud ainult lugemiseks mõeldud JSON-endpoint) või Forms -> Firebase sünkroonimine.
 
-## Konspekt
-Jaagup Kippar, *Kvalitatiivne digihumanitaaria* (2019), kaardirakenduste peatükk lk 91–125: Leaflet, markerid, kaardi klõpsamine, `map.distance()` ja Firebase'i ühenduse põhimõte. Kood on uus ja kasutab uuemaid mooduleid.
