@@ -4,7 +4,7 @@
 - `index.html` – veebileht, kaart, vorm ja tabel
 - `app.js` – Leaflet, kaugused, TXT laadimine ja Firebase salvestamine
 - `asukoht.txt` – näidisandmed; veerud `nimi;kirjeldus;lat;lng`
-- `firebase-config.js` – SINU Firebase projekti seaded
+- `firebase-config.js` – Firebase projekti seaded
 - `database.rules.json` – õppimiseks mõeldud piiratud Firebase Realtime Database reeglid
 
 ## 1. Laadi GitHubi
