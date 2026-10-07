@@ -22,9 +22,10 @@
         function kuva(d){
            console.log(d);
            for(let rida of d["results"]["bindings"]){
-             console.log(rida["itemlabel"]["value"]);
+              console.log(rida["itemLabel"]["value"]);
+              vastus.textContent+=" "+rida["itemLabel"]["value"];
+           }
         }
-      }
      </script>
   </head>
   <body>
