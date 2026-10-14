@@ -1,35 +1,54 @@
 <!doctype html>
 <html>
   <head>
+     <meta charset="UTF-8">
      <script>
         function kysi(){
            let lause=`
-             SELECT ?item ?itemLabel
+             SELECT DISTINCT ?item ?itemLabel
               WHERE
               {
-                ?item wdt:P27 wd:Q33. 
-                ?item wdt:P106 wd:Q177220.
-              
+                ?item wdt:P27 wd:Q191.
+                ?item wdt:P106 wd:Q11774891.
+                ?item wdt:P641 wd:Q41466.
+
                 SERVICE wikibase:label {
-                  bd:serviceParam wikibase:language "[AUTO_LANGUAGE],mul,en".
-                } 
+                  bd:serviceParam wikibase:language "et,en".
+                }
               }
-              LIMIT 10
+              LIMIT 50
            `;
-           let aadress="https://query.wikidata.org/sparql?format=json&query="+encodeURI(lause);      
-           fetch(aadress).then(d => d.json()).then(kuva);
+
+           let aadress="https://query.wikidata.org/sparql?format=json&query="+encodeURIComponent(lause);
+
+           vastus.textContent="Ootan vastust...";
+           fetch(aadress)
+             .then(d => d.json())
+             .then(kuva)
+             .catch(error => {
+                vastus.textContent="Päringu tegemisel tekkis viga.";
+                console.log(error);
+             });
         }
+
         function kuva(d){
            console.log(d);
+           vastus.innerHTML="";
+
            for(let rida of d["results"]["bindings"]){
-              console.log(rida["itemLabel"]["value"]);
-              vastus.textContent+=" "+rida["itemLabel"]["value"];
+              let lause=document.createElement("li");
+              lause.textContent=rida["itemLabel"]["value"];
+              vastus.appendChild(lause);
+           }
+
+           if(d["results"]["bindings"].length===0){
+              vastus.textContent="Tulemusi ei leitud.";
            }
         }
      </script>
   </head>
   <body>
      <input type="button" value="otsi" onclick="kysi()" />
-     <div id="vastus"></div>
+     <ul id="vastus"></ul>
   </body>
 </html>
