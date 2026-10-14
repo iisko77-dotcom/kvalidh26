@@ -1,49 +1,111 @@
 <!doctype html>
 <html>
   <head>
-     <script>
-        function kysi(){
-           let lause=`SELECT ?klubi ?klubiLabel (COUNT(DISTINCT ?isik) as ?kogus) {
-                ?isik wdt:P27 wd:${riik.value}.
-                ?isik wdt:P106 wd:Q11774891.
-                ?isik wdt:P54 ?klubi.
+    <meta charset="UTF-8">
+    <title>Jäähokimängijate klubid</title>
 
-                SERVICE wikibase:label {
-                  bd:serviceParam wikibase:language "et,en".
-                }
+    <script>
+      function kysi() {
+        const vastus = document.getElementById("vastus");
 
-              } GROUP BY ?klubi ?klubiLabel
-               ORDER BY DESC(?kogus)
+        let lause = `
+          SELECT ?klubi ?klubiLabel
+                 (COUNT(DISTINCT ?isik) AS ?kogus)
+          WHERE {
+            ?isik wdt:P27 wd:${document.getElementById("riik").value}.
+            ?isik wdt:P106 wd:Q11774891.
+            ?isik wdt:P641 wd:Q41466.
+            ?isik wdt:P54 ?klubi.
 
-              LIMIT 10
-           `;
-           console.log(lause);
-           let aadress="https://query.wikidata.org/sparql?format=json&query="+encodeURI(lause);
-           vastus.innerHTML="Ootan vastust...";
-           fetch(aadress).then(d => d.json()).then(kuva);
+            SERVICE wikibase:label {
+              bd:serviceParam wikibase:language "et,en".
+            }
+          }
+          GROUP BY ?klubi ?klubiLabel
+          ORDER BY DESC(?kogus)
+          LIMIT 10
+        `;
+
+        let aadress =
+          "https://query.wikidata.org/sparql?format=json&query=" +
+          encodeURIComponent(lause);
+
+        vastus.textContent = "Ootan vastust...";
+
+        fetch(aadress)
+          .then(d => {
+            if (!d.ok) throw new Error("HTTP " + d.status);
+            return d.json();
+          })
+          .then(d => kuva(d))
+          .catch(error => {
+            vastus.textContent = "Päringu tegemisel tekkis viga.";
+            console.log(error);
+          });
+      }
+
+      function kuva(d) {
+        const vastus = document.getElementById("vastus");
+        vastus.innerHTML = "";
+
+        for (let rida of d.results.bindings) {
+          let element = document.createElement("li");
+
+          element.textContent =
+            rida.klubiLabel.value +
+            " – mängijaid: " +
+            rida.kogus.value;
+
+          vastus.appendChild(element);
         }
 
-        function kuva(d){
-           console.log(d);
-           vastus.innerHTML="";
-           for(let rida of d["results"]["bindings"]){
-              let lause=document.createElement("li");
-              lause.textContent=rida["klubiLabel"]["value"]+
-                  " – mängijaid: "+rida["kogus"]["value"];
-              vastus.appendChild(lause);
-           }
+        if (d.results.bindings.length === 0) {
+          vastus.textContent = "Tulemusi ei leitud.";
         }
-     </script>
+      }
+    </script>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 0 20px;
+        line-height: 1.6;
+      }
+      h1 {
+        color: #183b56;
+        border-bottom: 2px solid #183b56;
+        padding-bottom: 10px;
+      }
+      select, button {
+        padding: 8px 12px;
+        margin: 5px 5px 5px 0;
+      }
+      li { margin-bottom: 6px; }
+    </style>
   </head>
+
   <body>
-     <select id="riik" onchange="kysi()">
-        <option value="Q191">Eesti</option>
-        <option value="Q33">Soome</option>
-        <option value="Q34">Rootsi</option>
-     </select>
+    <h1>Jäähokimängijate klubid</h1>
 
-     <input type="button" value="otsi" onclick="kysi()" />
+    <p>
+      Vali riik, et uurida, milliste klubidega on selle riigi
+      jäähokimängijad Wikidatas seotud. Klubid järjestatakse
+      leitud mängijate arvu järgi.
+    </p>
 
-     <ul id="vastus"></ul>
+    <label for="riik">Vali riik:</label>
+
+    <select id="riik">
+      <option value="Q191">Eesti</option>
+      <option value="Q33">Soome</option>
+      <option value="Q34">Rootsi</option>
+    </select>
+
+    <button onclick="kysi()">Otsi klubisid</button>
+
+    <h2>Otsingu tulemused</h2>
+    <ul id="vastus"></ul>
   </body>
 </html>
