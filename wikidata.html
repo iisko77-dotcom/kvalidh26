@@ -1,68 +1,77 @@
 <!doctype html>
 <html>
   <head>
-     <meta charset="UTF-8">
-     <script>
-        function kysi(){
-           let lause=`
-             SELECT DISTINCT ?item ?itemLabel
-              WHERE
-              {
-                ?item wdt:P27 wd:Q191.
-                ?item wdt:P106 wd:Q11774891.
-                ?item wdt:P641 wd:Q41466.
+    <meta charset="UTF-8">
+    <title>Eesti jäähokimängijad Wikidatas</title>
 
-                SERVICE wikibase:label {
-                  bd:serviceParam wikibase:language "et,en".
-                }
-              }
-              LIMIT 50
-           `;
+    <script>
+      function kysi() {
+        const vastus = document.getElementById("vastus");
 
-           let aadress="https://query.wikidata.org/sparql?format=json&query="+encodeURIComponent(lause);
+        let lause = `
+          SELECT DISTINCT ?item ?itemLabel
+          WHERE {
+            ?item wdt:P27 wd:Q191.
+            ?item wdt:P106 wd:Q11774891.
+            ?item wdt:P641 wd:Q41466.
 
-           vastus.textContent="Ootan vastust...";
-           fetch(aadress)
-             .then(d => d.json())
-             .then(kuva)
-             .catch(error => {
-                vastus.textContent="Päringu tegemisel tekkis viga.";
-                console.log(error);
-             });
+            SERVICE wikibase:label {
+              bd:serviceParam wikibase:language "et,en".
+            }
+          }
+          LIMIT 50
+        `;
+
+        let aadress =
+          "https://query.wikidata.org/sparql?format=json&query=" +
+          encodeURIComponent(lause);
+
+        vastus.textContent = "Ootan vastust...";
+
+        fetch(aadress)
+          .then(d => {
+            if (!d.ok) {
+              throw new Error("Wikidata päring ebaõnnestus: " + d.status);
+            }
+            return d.json();
+          })
+          .then(d => kuva(d))
+          .catch(error => {
+            vastus.textContent =
+              "Päringu tegemisel tekkis viga. Proovi uuesti.";
+            console.log(error);
+          });
+      }
+
+      function kuva(d) {
+        const vastus = document.getElementById("vastus");
+        vastus.innerHTML = "";
+
+        for (let rida of d.results.bindings) {
+          let element = document.createElement("li");
+          element.textContent = rida.itemLabel.value;
+          vastus.appendChild(element);
         }
 
-        function kuva(d){
-           console.log(d);
-           vastus.innerHTML="";
-
-           for(let rida of d["results"]["bindings"]){
-              let lause=document.createElement("li");
-              lause.textContent=rida["itemLabel"]["value"];
-              vastus.appendChild(lause);
-           }
-
-           if(d["results"]["bindings"].length===0){
-              vastus.textContent="Tulemusi ei leitud.";
-           }
+        if (d.results.bindings.length === 0) {
+          vastus.textContent = "Tulemusi ei leitud.";
         }
-     </script>
+      }
+    </script>
   </head>
+
   <body>
-  <h1>Eesti jäähokimängijad Wikidatas</h1>
+    <h1>Eesti jäähokimängijad Wikidatas</h1>
 
-  <p>
-    Sellel lehel otsitakse Wikidatast Eesti kodakondsusega
-    jäähokimängijaid, kelle ametiks on märgitud jäähokimängija
-    ja spordialaks jäähoki.
-  </p>
+    <p>
+      Sellel lehel otsitakse Wikidatast Eesti kodakondsusega
+      jäähokimängijaid, kelle ametiks on märgitud jäähokimängija
+      ja spordialaks jäähoki.
+    </p>
 
-  <button onclick="kysi()">Otsi mängijaid</button>
+    <button onclick="kysi()">Otsi mängijaid</button>
 
-  <h2>Otsingu tulemused</h2>
-  <ul id="vastus"></ul>
-</body>
-
-     <input type="button" value="otsi" onclick="kysi()" />
-     <ul id="vastus"></ul>
+    <h2>Otsingu tulemused</h2>
+    <ul id="vastus"></ul>
   </body>
 </html>
