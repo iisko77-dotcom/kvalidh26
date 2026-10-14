@@ -1,1 +1,49 @@
+<!doctype html>
+<html>
+  <head>
+     <script>
+        function kysi(){
+           let lause=`SELECT ?klubi ?klubiLabel (COUNT(DISTINCT ?isik) as ?kogus) {
+                ?isik wdt:P27 wd:${riik.value}.
+                ?isik wdt:P106 wd:Q11774891.
+                ?isik wdt:P54 ?klubi.
 
+                SERVICE wikibase:label {
+                  bd:serviceParam wikibase:language "et,en".
+                }
+
+              } GROUP BY ?klubi ?klubiLabel
+               ORDER BY DESC(?kogus)
+
+              LIMIT 10
+           `;
+           console.log(lause);
+           let aadress="https://query.wikidata.org/sparql?format=json&query="+encodeURI(lause);
+           vastus.innerHTML="Ootan vastust...";
+           fetch(aadress).then(d => d.json()).then(kuva);
+        }
+
+        function kuva(d){
+           console.log(d);
+           vastus.innerHTML="";
+           for(let rida of d["results"]["bindings"]){
+              let lause=document.createElement("li");
+              lause.textContent=rida["klubiLabel"]["value"]+
+                  " – mängijaid: "+rida["kogus"]["value"];
+              vastus.appendChild(lause);
+           }
+        }
+     </script>
+  </head>
+  <body>
+     <select id="riik" onchange="kysi()">
+        <option value="Q191">Eesti</option>
+        <option value="Q33">Soome</option>
+        <option value="Q34">Rootsi</option>
+     </select>
+
+     <input type="button" value="otsi" onclick="kysi()" />
+
+     <ul id="vastus"></ul>
+  </body>
+</html>
