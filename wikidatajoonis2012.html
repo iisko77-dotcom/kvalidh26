@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>2012. aasta videomängud Wikidatas</title>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -38,6 +40,12 @@
       height: 550px;
     }
 
+    .chart-container {
+      position: relative;
+      height: 380px;
+      width: 100%;
+    }
+
     p {
       line-height: 1.5;
     }
@@ -56,19 +64,21 @@
     Sellel lehel uurin 2012. aastal ilmunud videomänge
     Wikidata andmete põhjal. Kasutan kolme visualiseeringut:
     mullidiagrammi, võrgustikku ja klõpsatavat puud.
-    Iga päringu mängude valim on piiratud 20-50 mänguga.
+    Võrgustiku ja puu päringud on piiratud 50 tulemusega.
   </p>
 
   <section>
     <h2>1. Videomängude žanrid – mullidiagramm</h2>
 
     <p>
-      Mullide suurus näitab, kui paljudel valitud mängudel
-      on Wikidatas vastav žanr.
+      Mullide suurus näitab žanrite näidissagedust.
+      See diagramm kasutab illustratiivseid näidisandmeid,
+      mitte Wikidatast päriselt saadud statistikat.
     </p>
 
-    <iframe id="bubble" title="Videomängude žanrite mullidiagramm"
-      loading="lazy"></iframe>
+    <div class="chart-container">
+      <canvas id="bubbleChart"></canvas>
+    </div>
   </section>
 
   <section>
@@ -89,10 +99,12 @@
 
     <p>
       Puus saad avada arendaja nime ja vaadata
-      temaga seotud mänge.
+      temaga seotud mänge. Q-koodina esitatud arendajad
+      jäetakse võimalusel kuvamata.
     </p>
 
-    <iframe id="tree" title="Videomängude klõpsatav puu"
+    <iframe id="tree"
+      title="Videomängude klõpsatav puu"
       loading="lazy"></iframe>
   </section>
 
@@ -100,15 +112,89 @@
     Andmeallikas:
     <a href="https://www.wikidata.org/" target="_blank"
        rel="noopener noreferrer">Wikidata</a>.
-    Joonised kuvatakse Wikidata Query Service'i abil.
+    Võrgustik ja puu kuvatakse Wikidata Query Service'i abil.
   </p>
 
 <script>
-// Kõik kolm päringut kasutavad sama perioodi ja
-// kuni 100 erinevast mängust koosnevat valimit.
+// MULLIDIAGRAMM
+// Näidisandmed diagrammi toimimise demonstreerimiseks.
+// Need ei ole Wikidatast kontrollitud arvud.
+const bubbleData = [
+  { genre: "Action", count: 8 },
+  { genre: "Adventure", count: 6 },
+  { genre: "Role-playing", count: 5 },
+  { genre: "Strategy", count: 4 },
+  { genre: "Sports", count: 3 }
+];
+
+new Chart(document.getElementById("bubbleChart"), {
+  type: "bubble",
+
+  data: {
+    datasets: [{
+      label: "Žanrite näidissagedus",
+
+      data: bubbleData.map((item, index) => ({
+        x: index + 1,
+        y: item.count,
+        r: item.count * 4,
+        genre: item.genre
+      }))
+    }]
+  },
+
+  options: {
+    maintainAspectRatio: false,
+
+    scales: {
+      x: {
+        min: 0,
+        max: 6,
+
+        ticks: {
+          stepSize: 1,
+
+          callback: function(value) {
+            return bubbleData[value - 1]?.genre || "";
+          }
+        },
+
+        title: {
+          display: true,
+          text: "Žanr"
+        }
+      },
+
+      y: {
+        beginAtZero: true,
+
+        title: {
+          display: true,
+          text: "Näidissagedus"
+        }
+      }
+    },
+
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            return context.raw.genre + ": " +
+              context.raw.y + " (näidis)";
+          }
+        }
+      }
+    }
+  }
+});
+
+
+// WIKIDATA PÄRINGUD
+// Mängud, mille Wikidatas märgitud ilmumiskuupäev
+// jääb 2012. aastasse.
 const gameSelection = `
   SELECT DISTINCT ?game WHERE {
-    ?game wdt:P31/wdt:P279* wd:Q7889;
+    ?game wdt:P31 wd:Q7889;
           wdt:P577 ?date.
 
     FILTER(
@@ -119,30 +205,8 @@ const gameSelection = `
   LIMIT 50
 `;
 
-// 1. Mullidiagramm: žanrid ja mängude arv
-const bubbleQuery = `
-#defaultView:BubbleChart
-SELECT ?genreLabel (COUNT(DISTINCT ?game) AS ?count)
-WHERE {
-  ?game wdt:P31 wd:Q7889;
-        wdt:P577 ?date;
-        wdt:P136 ?genre.
 
-  FILTER(
-    ?date >= "2012-01-01T00:00:00Z"^^xsd:dateTime &&
-    ?date < "2013-01-01T00:00:00Z"^^xsd:dateTime
-  )
-
-  SERVICE wikibase:label {
-    bd:serviceParam wikibase:language "en".
-  }
-}
-GROUP BY ?genreLabel
-ORDER BY DESC(?count)
-LIMIT 3
-`;
-
-// 2. Võrgustik: mängud ja nende arendajad
+// VÕRGUSTIK: mängud ja arendajad
 const graphQuery = `
 #defaultView:Graph
 SELECT ?game ?gameLabel ?developer ?developerLabel
@@ -160,19 +224,17 @@ WHERE {
 LIMIT 50
 `;
 
-// 3. Puu: arendajad ja nendega seotud mängud
+
+// PUU: arendajad ja mängud
 const treeQuery = `
 #defaultView:Tree
 SELECT DISTINCT ?developerLabel ?gameLabel
 WHERE {
-  ?game wdt:P31 wd:Q7889;
-        wdt:P577 ?date;
-        wdt:P178 ?developer.
+  {
+    ${gameSelection}
+  }
 
-  FILTER(
-    ?date >= "2012-01-01T00:00:00Z"^^xsd:dateTime &&
-    ?date < "2013-01-01T00:00:00Z"^^xsd:dateTime
-  )
+  ?game wdt:P178 ?developer.
 
   SERVICE wikibase:label {
     bd:serviceParam wikibase:language "en".
@@ -184,8 +246,8 @@ ORDER BY ?developerLabel ?gameLabel
 LIMIT 50
 `;
 
+
 // Avame päringud Wikidata manustatud vaates.
-// Brauser ei tee ise API fetch-päringut.
 function showQuery(elementId, query) {
   const url =
     "https://query.wikidata.org/embed.html#" +
@@ -194,7 +256,6 @@ function showQuery(elementId, query) {
   document.getElementById(elementId).src = url;
 }
 
-showQuery("bubble", bubbleQuery);
 showQuery("graph", graphQuery);
 showQuery("tree", treeQuery);
 </script>
