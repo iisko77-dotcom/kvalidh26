@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>2012. aasta videomängud Wikidatas</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1100px;
+      margin: 30px auto;
+      padding: 0 20px;
+      background: #f4f6f8;
+      color: #222;
+    }
+
+    h1, h2 {
+      color: #253858;
+    }
+
+    section {
+      background: white;
+      padding: 20px;
+      margin: 25px 0;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px #0001;
+    }
+
+    iframe {
+      width: 100%;
+      height: 480px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+    }
+
+    .graph-frame {
+      height: 550px;
+    }
+
+    p {
+      line-height: 1.5;
+    }
+
+    .note {
+      color: #555;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>2012. aastal ilmunud videomängud Wikidatas</h1>
+
+  <p>
+    Sellel lehel uurin 2012. aastal ilmunud videomänge
+    Wikidata andmete põhjal. Kasutan kolme visualiseeringut:
+    mullidiagrammi, võrgustikku ja klõpsatavat puud.
+    Iga päringu mängude valim on piiratud 100 mänguga.
+  </p>
+
+  <section>
+    <h2>1. Videomängude žanrid – mullidiagramm</h2>
+
+    <p>
+      Mullide suurus näitab, kui paljudel valitud mängudel
+      on Wikidatas vastav žanr.
+    </p>
+
+    <iframe id="bubble" title="Videomängude žanrite mullidiagramm"
+      loading="lazy"></iframe>
+  </section>
+
+  <section>
+    <h2>2. Videomängude ja arendajate võrgustik</h2>
+
+    <p>
+      Võrgustikus tähistavad punktid mänge ja arendajaid.
+      Jooned näitavad nendevahelisi seoseid.
+    </p>
+
+    <iframe id="graph" class="graph-frame"
+      title="Videomängude ja arendajate võrgustik"
+      loading="lazy"></iframe>
+  </section>
+
+  <section>
+    <h2>3. Videomängude klõpsatav puu</h2>
+
+    <p>
+      Puus saad avada arendaja nime ja vaadata
+      temaga seotud mänge.
+    </p>
+
+    <iframe id="tree" title="Videomängude klõpsatav puu"
+      loading="lazy"></iframe>
+  </section>
+
+  <p class="note">
+    Andmeallikas:
+    <a href="https://www.wikidata.org/" target="_blank"
+       rel="noopener noreferrer">Wikidata</a>.
+    Joonised kuvatakse Wikidata Query Service'i abil.
+  </p>
+
+<script>
+// Kõik kolm päringut kasutavad sama perioodi ja
+// kuni 100 erinevast mängust koosnevat valimit.
+const gameSelection = `
+  SELECT DISTINCT ?game WHERE {
+    ?game wdt:P31/wdt:P279* wd:Q7889;
+          wdt:P577 ?date.
+
+    FILTER(
+      ?date >= "2012-01-01T00:00:00Z"^^xsd:dateTime &&
+      ?date < "2013-01-01T00:00:00Z"^^xsd:dateTime
+    )
+  }
+  LIMIT 100
+`;
+
+// 1. Mullidiagramm: žanrid ja mängude arv
+const bubbleQuery = `
+#defaultView:BubbleChart
+SELECT ?genreLabel (COUNT(DISTINCT ?game) AS ?count)
+WHERE {
+  {
+    ${gameSelection}
+  }
+
+  ?game wdt:P136 ?genre.
+
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "en".
+  }
+}
+GROUP BY ?genreLabel
+ORDER BY DESC(?count)
+LIMIT 20
+`;
+
+// 2. Võrgustik: mängud ja nende arendajad
+const graphQuery = `
+#defaultView:Graph
+SELECT ?game ?gameLabel ?developer ?developerLabel
+WHERE {
+  {
+    ${gameSelection}
+  }
+
+  ?game wdt:P178 ?developer.
+
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "en".
+  }
+}
+LIMIT 100
+`;
+
+// 3. Puu: arendajad ja nendega seotud mängud
+const treeQuery = `
+#defaultView:Tree
+SELECT ?developer ?developerLabel ?game ?gameLabel
+WHERE {
+  {
+    ${gameSelection}
+  }
+
+  ?game wdt:P178 ?developer.
+
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "en".
+  }
+}
+ORDER BY ?developerLabel ?gameLabel
+LIMIT 100
+`;
+
+// Avame päringud Wikidata manustatud vaates.
+// Brauser ei tee ise API fetch-päringut.
+function showQuery(elementId, query) {
+  const url =
+    "https://query.wikidata.org/embed.html#" +
+    encodeURIComponent(query);
+
+  document.getElementById(elementId).src = url;
+}
+
+showQuery("bubble", bubbleQuery);
+showQuery("graph", graphQuery);
+showQuery("tree", treeQuery);
+</script>
+
+</body>
+</html>
