@@ -229,7 +229,7 @@ const treeQuery = `
 #defaultView:Tree
 SELECT DISTINCT ?developerLabel ?gameLabel
 WHERE {
-  ?game wdt:P31/wdt:P279* wd:Q7889;
+  ?game wdt:P31 wd:Q7889;
         wdt:P577 ?date;
         wdt:P178 ?developer.
 
@@ -249,7 +249,6 @@ WHERE {
 ORDER BY ?developerLabel ?gameLabel
 LIMIT 50
 `;
-
 // Avame päringud Wikidata manustatud vaates.
 function showQuery(elementId, query) {
   const url =
