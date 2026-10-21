@@ -125,7 +125,16 @@ const bubbleQuery = `
 SELECT ?genreLabel (COUNT(DISTINCT ?game) AS ?count)
 WHERE {
   {
-    ${gameSelection}
+    SELECT DISTINCT ?game WHERE {
+      ?game wdt:P31 wd:Q7889;
+            wdt:P577 ?date.
+
+      FILTER(
+        ?date >= "2012-01-01T00:00:00Z"^^xsd:dateTime &&
+        ?date < "2013-01-01T00:00:00Z"^^xsd:dateTime
+      )
+    }
+    LIMIT 100
   }
 
   ?game wdt:P136 ?genre.
@@ -136,7 +145,7 @@ WHERE {
 }
 GROUP BY ?genreLabel
 ORDER BY DESC(?count)
-LIMIT 10
+LIMIT 15
 `;
 
 // 2. Võrgustik: mängud ja nende arendajad
