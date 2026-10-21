@@ -134,7 +134,7 @@ WHERE {
         ?date < "2013-01-01T00:00:00Z"^^xsd:dateTime
       )
     }
-    LIMIT 100
+    LIMIT 50
   }
 
   ?game wdt:P136 ?genre.
@@ -145,7 +145,7 @@ WHERE {
 }
 GROUP BY ?genreLabel
 ORDER BY DESC(?count)
-LIMIT 15
+LIMIT 3
 `;
 
 // 2. Võrgustik: mängud ja nende arendajad
