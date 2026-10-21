@@ -224,28 +224,31 @@ WHERE {
 LIMIT 50
 `;
 
-
 // PUU: arendajad ja mängud
 const treeQuery = `
 #defaultView:Tree
 SELECT DISTINCT ?developerLabel ?gameLabel
 WHERE {
-  {
-    ${gameSelection}
-  }
+  ?game wdt:P31/wdt:P279* wd:Q7889;
+        wdt:P577 ?date;
+        wdt:P178 ?developer.
 
-  ?game wdt:P178 ?developer.
+  FILTER(
+    ?date >= "2012-01-01T00:00:00Z"^^xsd:dateTime &&
+    ?date < "2013-01-01T00:00:00Z"^^xsd:dateTime
+  )
 
   SERVICE wikibase:label {
     bd:serviceParam wikibase:language "en".
   }
 
+  FILTER(BOUND(?developerLabel))
+  FILTER(BOUND(?gameLabel))
   FILTER(!REGEX(STR(?developerLabel), "^Q[0-9]+$"))
 }
 ORDER BY ?developerLabel ?gameLabel
 LIMIT 50
 `;
-
 
 // Avame päringud Wikidata manustatud vaates.
 function showQuery(elementId, query) {
