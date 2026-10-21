@@ -2,8 +2,9 @@
 <html lang="et">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Wikidata – klõpsatav puu</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>2010–2015 ilmunud videomängude klõpsatav puu</title>
 
   <style>
     body {
@@ -15,7 +16,9 @@
       color: #222;
     }
 
-    h1 { color: #253858; }
+    h1 {
+      color: #253858;
+    }
 
     .tree-box {
       background: white;
@@ -29,7 +32,9 @@
       padding-left: 25px;
     }
 
-    li { margin: 10px 0; }
+    li {
+      margin: 9px 0;
+    }
 
     .toggle {
       border: none;
@@ -38,18 +43,22 @@
       border-radius: 5px;
       padding: 7px 10px;
       cursor: pointer;
-      font-size: 15px;
+      font-size: 14px;
       text-align: left;
     }
 
-    .toggle:hover { background: #d5e2f5; }
+    .toggle:hover {
+      background: #d5e2f5;
+    }
 
     .children {
       border-left: 2px solid #d5dce8;
       margin-left: 10px;
     }
 
-    .hidden { display: none; }
+    .hidden {
+      display: none;
+    }
 
     .game {
       padding: 5px 10px;
@@ -61,46 +70,66 @@
       font-size: 14px;
     }
 
-    a { color: #245bb5; }
+    a {
+      color: #245bb5;
+    }
   </style>
 </head>
 
 <body>
-  <h1>Videomängude klõpsatav puu</h1>
+  <h1>2010–2015 ilmunud videomängude klõpsatav puu</h1>
 
   <p>
-    See puu näitab Wikidata andmete põhjal
-    videomängude arendajaid ja nendega seotud mänge.
-    Vajuta arendaja nimele, et mängude loend avada.
+    Puu rühmitab kuni 100 aastatel 2010–2015
+    ilmunud videomängu arendajate järgi.
+    Klõpsa arendaja nimel, et avada temaga
+    seotud mängud.
   </p>
 
   <div class="tree-box">
     <p id="status" class="status">
       Laadin Wikidata andmeid...
     </p>
+
     <div id="tree"></div>
   </div>
 
   <p>
     Andmeallikas:
-    <a href="https://query.wikidata.org/" target="_blank"
-       rel="noopener noreferrer">Wikidata Query Service</a>
+    <a href="https://query.wikidata.org/"
+       target="_blank" rel="noopener noreferrer">
+      Wikidata Query Service
+    </a>
   </p>
 
 <script>
 const query = `
-  SELECT DISTINCT ?game ?gameLabel
-                  ?developer ?developerLabel
+  SELECT ?game ?gameLabel ?date
+         ?developer ?developerLabel
   WHERE {
-    ?game wdt:P31 wd:Q7889;
-          wdt:P178 ?developer.
+    {
+      SELECT ?game ?date WHERE {
+        ?game wdt:P31/wdt:P279* wd:Q7889;
+              wdt:P577 ?date.
+
+        FILTER(
+          ?date >= "2010-01-01T00:00:00Z"^^xsd:dateTime &&
+          ?date < "2016-01-01T00:00:00Z"^^xsd:dateTime
+        )
+      }
+      GROUP BY ?game ?date
+      ORDER BY ?date
+      LIMIT 100
+    }
+
+    ?game wdt:P178 ?developer.
 
     SERVICE wikibase:label {
-      bd:serviceParam wikibase:language "en".
+      bd:serviceParam wikibase:language "et,en".
     }
   }
+
   ORDER BY ?developerLabel ?gameLabel
-  LIMIT 100
 `;
 
 async function loadTree() {
@@ -108,104 +137,139 @@ async function loadTree() {
   const tree = document.getElementById("tree");
 
   try {
-    const url = "https://query.wikidata.org/sparql?query=" +
+    const url =
+      "https://query.wikidata.org/sparql?query=" +
       encodeURIComponent(query);
 
     const response = await fetch(url, {
       headers: {
-        Accept: "application/sparql-results+json"
+        "Accept": "application/sparql-results+json"
       }
     });
 
     if (!response.ok) {
-      throw new Error("HTTP " + response.status);
+      throw new Error(
+        "Wikidata vastas veaga HTTP " + response.status
+      );
     }
 
     const json = await response.json();
     const rows = json.results.bindings;
 
-    // Koondame mängud arendajate kaupa.
+    // Võtame Q-koodi ainult varuvariandina,
+    // kui Wikidatas puudub arusaadav nimi.
+    function getId(uri) {
+      return uri ? uri.split("/").pop() : "Tundmatu";
+    }
+
     const developers = new Map();
 
     rows.forEach(row => {
-      const id = row.developer.value;
+      const developerId = row.developer.value;
 
-      if (!developers.has(id)) {
-        developers.set(id, {
-          name: row.developerLabel.value,
-          url: id,
+      const developerName =
+        row.developerLabel?.value ||
+        getId(developerId);
+
+      if (!developers.has(developerId)) {
+        developers.set(developerId, {
+          name: developerName,
+          url: developerId,
           games: new Map()
         });
       }
 
-      const dev = developers.get(id);
+      const gameId = row.game.value;
 
-      dev.games.set(row.game.value, {
-        name: row.gameLabel.value,
-        url: row.game.value
+      const gameName =
+        row.gameLabel?.value ||
+        getId(gameId);
+
+      developers.get(developerId).games.set(gameId, {
+        name: gameName,
+        url: gameId
       });
     });
 
-    if (developers.size === 0) {
-      status.textContent = "Andmeid ei leitud.";
+    if (rows.length === 0) {
+      status.textContent =
+        "Selle perioodi kohta ei leitud arendaja-seosega mänge.";
       return;
     }
 
     const root = document.createElement("ul");
 
-    developers.forEach(dev => {
-      const item = document.createElement("li");
-      const button = document.createElement("button");
+    // Sorteerime arendajad tähestikulises järjekorras.
+    [...developers.entries()]
+      .sort((a, b) =>
+        a[1].name.localeCompare(b[1].name)
+      )
+      .forEach(([developerId, dev]) => {
+        const item = document.createElement("li");
 
-      button.className = "toggle";
-      button.textContent =
-        "▶ " + dev.name + " (" + dev.games.size + ")";
+        const button = document.createElement("button");
+        button.className = "toggle";
 
-      const childList = document.createElement("ul");
-      childList.className = "children hidden";
-
-      dev.games.forEach(game => {
-        const gameItem = document.createElement("li");
-        const link = document.createElement("a");
-
-        link.href = game.url;
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        link.textContent = game.name;
-        link.className = "game";
-
-        gameItem.appendChild(link);
-        childList.appendChild(gameItem);
-      });
-
-      button.addEventListener("click", () => {
-        const isClosed = childList.classList.toggle("hidden");
         button.textContent =
-          (isClosed ? "▶ " : "▼ ") +
-          dev.name + " (" + dev.games.size + ")";
+          `▶ ${dev.name} (${dev.games.size})`;
+
+        const childList = document.createElement("ul");
+        childList.className = "children hidden";
+
+        // Lisame arendaja alla tema mängud.
+        [...dev.games.values()]
+          .sort((a, b) =>
+            a.name.localeCompare(b.name)
+          )
+          .forEach(game => {
+            const gameItem = document.createElement("li");
+            const link = document.createElement("a");
+
+            link.href = game.url;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            link.textContent = game.name;
+            link.className = "game";
+
+            gameItem.appendChild(link);
+            childList.appendChild(gameItem);
+          });
+
+        // Klõps muudab puuosa avatuks või suletuks.
+        button.addEventListener("click", () => {
+          const closed =
+            childList.classList.toggle("hidden");
+
+          button.textContent =
+            `${closed ? "▶" : "▼"} ${dev.name} (${dev.games.size})`;
+        });
+
+        item.appendChild(button);
+        item.appendChild(childList);
+        root.appendChild(item);
       });
 
-      item.appendChild(button);
-      item.appendChild(childList);
-      root.appendChild(item);
-    });
-
-    tree.appendChild(root);
+    tree.replaceChildren(root);
 
     status.textContent =
-      "Leitud " + rows.length +
-      " seost, " + developers.size +
-      " erinevat arendajat. Vajuta arendaja nimele.";
+      "Periood: 2010–2015. " +
+      "Valimis kuni 100 mängu; leiti " +
+      developers.size + " arendajat ja " +
+      rows.length + " mängu-arendaja seost. " +
+      "Klõpsa arendaja nimel.";
 
   } catch (error) {
     console.error(error);
+
     status.textContent =
       "Andmete laadimine ebaõnnestus. " +
-      "Proovi lehte uuesti laadida.";
+      "Proovi uuesti laadida ja kontrolli vajadusel " +
+      "F12 → Console.";
   }
 }
 
 loadTree();
 </script>
+
 </body>
 </html>
