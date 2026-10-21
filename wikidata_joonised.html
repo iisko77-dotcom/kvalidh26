@@ -2,11 +2,10 @@
 <html lang="et">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Wikidata joonised – videomängud</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>2010–2015 ilmunud videomängud Wikidatas</title>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 
   <style>
     body {
@@ -18,7 +17,9 @@
       color: #222;
     }
 
-    h1, h2 { color: #253858; }
+    h1, h2 {
+      color: #253858;
+    }
 
     section {
       background: white;
@@ -33,144 +34,196 @@
       height: 380px;
     }
 
-    #network {
-      height: 500px;
-      border: 1px solid #ddd;
-    }
-
     .status {
       color: #555;
       font-size: 14px;
+    }
+
+    a {
+      color: #245bb5;
     }
   </style>
 </head>
 
 <body>
-  <h1>Videomängud Wikidatas</h1>
+  <h1>2010–2015 ilmunud videomängud Wikidatas</h1>
+
   <p>
-    Sellel lehel uurin videomängude žanre,
-    ilmumisaastaid ja seoseid arendajatega.
+    Uurin kuni 100 aastatel 2010–2015 ilmunud
+    videomängu žanre ja ilmumisaastaid.
     Andmed pärinevad Wikidatast.
   </p>
 
   <section>
-    <h2>1. Videomängude žanrid</h2>
+    <h2>1. Videomängude žanrid aastatel 2010–2015</h2>
+
     <p>
-      Diagramm näitab, milliseid žanre leidub
-      valitud kuni 100 videomängu seas kõige rohkem.
+      Mullidiagramm võrdleb žanrite esinemist
+      valitud mängude hulgas. Suurem mull tähistab
+      rohkem mänge.
     </p>
-    <p id="genreStatus" class="status">Laadin andmeid...</p>
+
+    <p id="genreStatus" class="status">
+      Laadin andmeid Wikidatast...
+    </p>
+
     <div class="chart">
       <canvas id="genreChart"></canvas>
     </div>
   </section>
 
   <section>
-    <h2>2. Videomängude ajajoon</h2>
+    <h2>2. Videomängude ilmumisaastad 2010–2015</h2>
+
     <p>
       Iga punkt tähistab ühte mängu ja selle
-      Wikidatasse märgitud ilmumisaastat.
+      Wikidatas märgitud ilmumiskuupäeva.
     </p>
-    <p id="timeStatus" class="status">Laadin andmeid...</p>
+
+    <p id="timeStatus" class="status">
+      Laadin andmeid Wikidatast...
+    </p>
+
     <div class="chart">
       <canvas id="timeChart"></canvas>
     </div>
   </section>
 
-  <section>
-    <h2>3. Videomängude ja arendajate võrgustik</h2>
-    <p>
-      Punktid tähistavad mänge ja arendajaid.
-      Joon näitab, milline arendaja on mänguga seotud.
-      Võrgustikku saab liigutada ja suurendada.
-    </p>
-    <p id="networkStatus" class="status">Laadin andmeid...</p>
-    <div id="network"></div>
-  </section>
-
   <p>
     Andmeallikas:
-    <a href="https://www.wikidata.org/" target="_blank"
-       rel="noopener noreferrer">Wikidata</a>
-    · Päringud:
-    <a href="https://query.wikidata.org/" target="_blank"
-       rel="noopener noreferrer">Wikidata Query Service</a>
+    <a href="https://www.wikidata.org/"
+       target="_blank" rel="noopener noreferrer">Wikidata</a>
+    ·
+    <a href="https://query.wikidata.org/"
+       target="_blank" rel="noopener noreferrer">
+      Wikidata Query Service
+    </a>
   </p>
 
 <script>
 const endpoint = "https://query.wikidata.org/sparql";
+
+// Valime kuni 100 mängu, mille ilmumiskuupäev
+// jääb ajavahemikku 2010–2015.
+const gamesSubquery = `
+  SELECT ?game ?date WHERE {
+    ?game wdt:P31/wdt:P279* wd:Q7889;
+          wdt:P577 ?date.
+
+    FILTER(
+      ?date >= "2010-01-01T00:00:00Z"^^xsd:dateTime &&
+      ?date < "2016-01-01T00:00:00Z"^^xsd:dateTime
+    )
+  }
+  GROUP BY ?game ?date
+  ORDER BY ?date
+  LIMIT 100
+`;
 
 async function queryWikidata(sparql) {
   const url = endpoint + "?query=" +
     encodeURIComponent(sparql);
 
   const response = await fetch(url, {
-    headers: { Accept: "application/sparql-results+json" }
+    headers: {
+      "Accept": "application/sparql-results+json"
+    }
   });
 
   if (!response.ok) {
-    throw new Error("Wikidata päring ebaõnnestus: " +
-      response.status);
+    throw new Error(
+      "Wikidata vastas veaga HTTP " + response.status
+    );
   }
 
   const json = await response.json();
   return json.results.bindings;
 }
 
-// 1. MULLIDIAGRAMM: kuni 100 mängu ja nende žanrid
+function showError(id, error) {
+  console.error(error);
+
+  document.getElementById(id).textContent =
+    "Andmete laadimine ebaõnnestus. " +
+    "Proovi lehte uuesti laadida. " +
+    "Täpsem info: F12 → Console.";
+}
+
+// 1. MULLIDIAGRAMM: mängude žanrid
 async function drawGenres() {
   const query = `
-    SELECT ?genreLabel
+    SELECT ?genre ?genreLabel
            (COUNT(DISTINCT ?game) AS ?count)
     WHERE {
       {
-        SELECT DISTINCT ?game WHERE {
-          ?game wdt:P31 wd:Q7889.
-        }
-        LIMIT 100
+        ${gamesSubquery}
       }
 
       ?game wdt:P136 ?genre.
 
       SERVICE wikibase:label {
-        bd:serviceParam wikibase:language "en".
+        bd:serviceParam wikibase:language "et,en".
       }
     }
-    GROUP BY ?genreLabel
+    GROUP BY ?genre ?genreLabel
     ORDER BY DESC(?count)
     LIMIT 15
   `;
 
   const rows = await queryWikidata(query);
 
-  const labels = rows.map(r => r.genreLabel.value);
-  const values = rows.map(r => Number(r.count.value));
+  if (rows.length === 0) {
+    throw new Error("Žanrite kohta ei leitud tulemusi.");
+  }
+
+  const labels = rows.map(r =>
+    r.genreLabel?.value ||
+    r.genre.value.split("/").pop()
+  );
+
+  const values = rows.map(r =>
+    Number(r.count.value)
+  );
 
   new Chart(document.getElementById("genreChart"), {
     type: "bubble",
+
     data: {
       datasets: [{
-        label: "Mängude arv žanri järgi",
+        label: "Mänge žanri järgi",
+
         data: labels.map((label, i) => ({
           x: i + 1,
           y: values[i],
-          r: Math.max(7, Math.min(28, values[i] * 3)),
+          r: Math.max(7, Math.min(28, 5 + values[i] * 2)),
           genre: label
         }))
       }]
     },
+
     options: {
       maintainAspectRatio: false,
+
       scales: {
         x: {
-          title: { display: true, text: "Žanri järjestus" },
-          ticks: { stepSize: 1 }
+          title: {
+            display: true,
+            text: "Žanrid sageduse järjekorras"
+          },
+          ticks: {
+            stepSize: 1
+          }
         },
+
         y: {
           beginAtZero: true,
-          title: { display: true, text: "Mängude arv" }
+          title: {
+            display: true,
+            text: "Mängude arv"
+          }
         }
       },
+
       plugins: {
         tooltip: {
           callbacks: {
@@ -183,23 +236,23 @@ async function drawGenres() {
   });
 
   document.getElementById("genreStatus").textContent =
-    "Leitud žanre: " + rows.length;
+    "Kuvatud žanre: " + rows.length +
+    ". Arvestatud on kuni 100 mängu aastatest 2010–2015.";
 }
 
-// 2. AJALOOLINE AJATELG: kuni 100 mängu
+// 2. AJATELG: mängude ilmumisaastad
 async function drawTimeline() {
   const query = `
-    SELECT DISTINCT ?gameLabel ?date
-    WHERE {
-      ?game wdt:P31 wd:Q7889;
-            wdt:P577 ?date.
+    SELECT ?game ?gameLabel ?date WHERE {
+      {
+        ${gamesSubquery}
+      }
 
       SERVICE wikibase:label {
-        bd:serviceParam wikibase:language "en".
+        bd:serviceParam wikibase:language "et,en".
       }
     }
     ORDER BY ?date
-    LIMIT 100
   `;
 
   const rows = await queryWikidata(query);
@@ -207,36 +260,56 @@ async function drawTimeline() {
   const points = rows.map((r, i) => ({
     x: Number(r.date.value.slice(0, 4)),
     y: i + 1,
-    game: r.gameLabel.value,
+
+    game: r.gameLabel?.value ||
+      r.game.value.split("/").pop(),
+
     date: r.date.value.slice(0, 10)
   })).filter(p => Number.isFinite(p.x));
 
+  if (points.length === 0) {
+    throw new Error("Ajajoone jaoks ei leitud mänge.");
+  }
+
   new Chart(document.getElementById("timeChart"), {
     type: "scatter",
+
     data: {
       datasets: [{
         label: "Videomängud",
         data: points,
-        pointRadius: 5
+        pointRadius: 5,
+        pointHoverRadius: 7
       }]
     },
+
     options: {
       maintainAspectRatio: false,
+
       scales: {
         x: {
           type: "linear",
+          min: 2010,
+          max: 2015,
+
+          ticks: {
+            stepSize: 1
+          },
+
           title: {
             display: true,
             text: "Ilmumisaasta"
           }
         },
+
         y: {
           title: {
             display: true,
-            text: "Mäng (järjekorranumber)"
+            text: "Mängu järjekorranumber"
           }
         }
       },
+
       plugins: {
         tooltip: {
           callbacks: {
@@ -249,112 +322,28 @@ async function drawTimeline() {
   });
 
   document.getElementById("timeStatus").textContent =
-    "Kuvatud mänge: " + points.length;
+    "Kuvatud mänge: " + points.length +
+    ". Periood: 2010–2015.";
 }
 
-// 3. VÕRGUSTIK: mängud ja nende arendajad
-async function drawNetwork() {
-  const query = `
-    SELECT DISTINCT ?game ?gameLabel
-                    ?developer ?developerLabel
-    WHERE {
-      ?game wdt:P31 wd:Q7889;
-            wdt:P178 ?developer.
+// Laeme diagrammid eraldi, et ühe viga
+// ei takistaks teise diagrammi kuvamist.
+async function init() {
+  try {
+    await drawGenres();
+  } catch (error) {
+    showError("genreStatus", error);
+  }
 
-      SERVICE wikibase:label {
-        bd:serviceParam wikibase:language "en".
-      }
-    }
-    LIMIT 100
-  `;
-
-  const rows = await queryWikidata(query);
-  const nodeMap = new Map();
-  const edges = [];
-  const edgeSet = new Set();
-
-  rows.forEach(r => {
-    const gameId = r.game.value;
-    const devId = r.developer.value;
-
-    if (!nodeMap.has(gameId)) {
-      nodeMap.set(gameId, {
-        id: gameId,
-        label: r.gameLabel.value,
-        group: "game",
-        shape: "dot",
-        size: 12
-      });
-    }
-
-    if (!nodeMap.has(devId)) {
-      nodeMap.set(devId, {
-        id: devId,
-        label: r.developerLabel.value,
-        group: "developer",
-        shape: "box"
-      });
-    }
-
-    const key = gameId + "|" + devId;
-
-    if (!edgeSet.has(key)) {
-      edges.push({
-        from: gameId,
-        to: devId
-      });
-      edgeSet.add(key);
-    }
-  });
-
-  const container = document.getElementById("network");
-
-  new vis.Network(container, {
-    nodes: new vis.DataSet([...nodeMap.values()]),
-    edges: new vis.DataSet(edges)
-  }, {
-    nodes: {
-      font: { size: 12 }
-    },
-    edges: {
-      color: { color: "#aab4c3" },
-      smooth: true
-    },
-    physics: {
-      stabilization: { iterations: 150 }
-    },
-    interaction: {
-      hover: true,
-      navigationButtons: true,
-      keyboard: true
-    }
-  });
-
-  document.getElementById("networkStatus").textContent =
-    "Seoseid: " + edges.length +
-    " · Erinevaid sõlmi: " + nodeMap.size;
+  try {
+    await drawTimeline();
+  } catch (error) {
+    showError("timeStatus", error);
+  }
 }
 
-// Käivitame kõik kolm joonist
-async function loadCharts() {
-  const tasks = [
-    [drawGenres, "genreStatus"],
-    [drawTimeline, "timeStatus"],
-    [drawNetwork, "networkStatus"]
-  ];
-
-  await Promise.all(tasks.map(async ([draw, statusId]) => {
-    try {
-      await draw();
-    } catch (error) {
-      console.error(error);
-      document.getElementById(statusId).textContent =
-        "Andmete laadimine ebaõnnestus. Proovi lehte uuesti laadida.";
-    }
-  }));
-}
-
-loadCharts();
+init();
 </script>
+
 </body>
 </html>
