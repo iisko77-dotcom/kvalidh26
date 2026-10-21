@@ -225,9 +225,10 @@ LIMIT 50
 `;
 
 // PUU: arendajad ja mängud
+
 const treeQuery = `
 #defaultView:Tree
-SELECT DISTINCT ?developerLabel ?gameLabel
+SELECT DISTINCT ?developer ?developerLabel ?game ?gameLabel
 WHERE {
   ?game wdt:P31 wd:Q7889;
         wdt:P577 ?date;
@@ -241,14 +242,11 @@ WHERE {
   SERVICE wikibase:label {
     bd:serviceParam wikibase:language "en".
   }
-
-  FILTER(BOUND(?developerLabel))
-  FILTER(BOUND(?gameLabel))
-  FILTER(!REGEX(STR(?developerLabel), "^Q[0-9]+$"))
 }
 ORDER BY ?developerLabel ?gameLabel
 LIMIT 50
 `;
+
 // Avame päringud Wikidata manustatud vaates.
 function showQuery(elementId, query) {
   const url =
