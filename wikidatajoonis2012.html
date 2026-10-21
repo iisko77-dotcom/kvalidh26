@@ -56,7 +56,7 @@
     Sellel lehel uurin 2012. aastal ilmunud videomänge
     Wikidata andmete põhjal. Kasutan kolme visualiseeringut:
     mullidiagrammi, võrgustikku ja klõpsatavat puud.
-    Iga päringu mängude valim on piiratud 50 mänguga.
+    Iga päringu mängude valim on piiratud 20-50 mänguga.
   </p>
 
   <section>
@@ -134,7 +134,7 @@ WHERE {
         ?date < "2013-01-01T00:00:00Z"^^xsd:dateTime
       )
     }
-    LIMIT 50
+    LIMIT 20
   }
 
   ?game wdt:P136 ?genre.
