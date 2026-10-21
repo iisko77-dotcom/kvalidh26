@@ -124,20 +124,14 @@ const bubbleQuery = `
 #defaultView:BubbleChart
 SELECT ?genreLabel (COUNT(DISTINCT ?game) AS ?count)
 WHERE {
-  {
-    SELECT DISTINCT ?game WHERE {
-      ?game wdt:P31 wd:Q7889;
-            wdt:P577 ?date.
+  ?game wdt:P31 wd:Q7889;
+        wdt:P577 ?date;
+        wdt:P136 ?genre.
 
-      FILTER(
-        ?date >= "2012-01-01T00:00:00Z"^^xsd:dateTime &&
-        ?date < "2013-01-01T00:00:00Z"^^xsd:dateTime
-      )
-    }
-    LIMIT 20
-  }
-
-  ?game wdt:P136 ?genre.
+  FILTER(
+    ?date >= "2012-01-01T00:00:00Z"^^xsd:dateTime &&
+    ?date < "2013-01-01T00:00:00Z"^^xsd:dateTime
+  )
 
   SERVICE wikibase:label {
     bd:serviceParam wikibase:language "en".
@@ -169,17 +163,22 @@ LIMIT 50
 // 3. Puu: arendajad ja nendega seotud mängud
 const treeQuery = `
 #defaultView:Tree
-SELECT ?developer ?developerLabel ?game ?gameLabel
+SELECT DISTINCT ?developerLabel ?gameLabel
 WHERE {
-  {
-    ${gameSelection}
-  }
+  ?game wdt:P31 wd:Q7889;
+        wdt:P577 ?date;
+        wdt:P178 ?developer.
 
-  ?game wdt:P178 ?developer.
+  FILTER(
+    ?date >= "2012-01-01T00:00:00Z"^^xsd:dateTime &&
+    ?date < "2013-01-01T00:00:00Z"^^xsd:dateTime
+  )
 
   SERVICE wikibase:label {
     bd:serviceParam wikibase:language "en".
   }
+
+  FILTER(!REGEX(STR(?developerLabel), "^Q[0-9]+$"))
 }
 ORDER BY ?developerLabel ?gameLabel
 LIMIT 50
