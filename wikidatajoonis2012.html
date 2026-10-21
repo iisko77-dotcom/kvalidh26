@@ -56,7 +56,7 @@
     Sellel lehel uurin 2012. aastal ilmunud videomänge
     Wikidata andmete põhjal. Kasutan kolme visualiseeringut:
     mullidiagrammi, võrgustikku ja klõpsatavat puud.
-    Iga päringu mängude valim on piiratud 100 mänguga.
+    Iga päringu mängude valim on piiratud 50 mänguga.
   </p>
 
   <section>
@@ -116,7 +116,7 @@ const gameSelection = `
       ?date < "2013-01-01T00:00:00Z"^^xsd:dateTime
     )
   }
-  LIMIT 100
+  LIMIT 50
 `;
 
 // 1. Mullidiagramm: žanrid ja mängude arv
@@ -154,7 +154,7 @@ WHERE {
     bd:serviceParam wikibase:language "en".
   }
 }
-LIMIT 100
+LIMIT 50
 `;
 
 // 3. Puu: arendajad ja nendega seotud mängud
@@ -173,7 +173,7 @@ WHERE {
   }
 }
 ORDER BY ?developerLabel ?gameLabel
-LIMIT 100
+LIMIT 50
 `;
 
 // Avame päringud Wikidata manustatud vaates.
